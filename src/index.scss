@@ -40,6 +40,10 @@ body {
         stroke-linecap: round;
     }
 
+    path.real-trend-last {
+        stroke-dasharray: 6;
+    }
+
     text {
         font-size: 1.5em;
     }
@@ -47,7 +51,7 @@ body {
     .drag-helper {
 
         rect {
-            fill: lightgrey;
+            fill: rgba(211, 211, 211, 0.85);
         }
 
         text {
