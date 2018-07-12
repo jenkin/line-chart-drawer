@@ -18,12 +18,29 @@ body {
 
     width: 75%;
     height: 75%;
+    background-color: white;
+
+    svg {
+        cursor: crosshair;
+    }
+
+    svg.up {
+        cursor: ne-resize;
+    }
+
+    svg.down {
+        cursor: se-resize;
+    }
 
     path {
         fill: none;
         stroke-width: 3px;
         stroke-linejoin: round;
         stroke-linecap: round;
+    }
+
+    text {
+        font-size: 1.5em;
     }
 
     .drag-helper {

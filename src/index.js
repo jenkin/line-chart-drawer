@@ -17,7 +17,8 @@ let q = qs.parse(location.search),
 let parseTime = d3.timeParse("%d-%b-%y");
 
 let x = d3.scaleTime().rangeRound([0, width]),
-    y = d3.scaleLinear().rangeRound([height, 0]);
+    y = d3.scaleLinear().rangeRound([height, 0]),
+    c = d3.scaleSequential(d3.interpolateRdYlGn).domain([1,0]);
 
 let line = d3.line()
     .x(function (d) { return x(d.date); })
@@ -54,6 +55,7 @@ d3.csv(
             .attr("fill", "#000")
             .attr("x", width)
             .attr("dy", "-0.71em")
+            .attr("dx", "-0.71em")
             .attr("text-anchor", "end")
             .text("Year");
 
@@ -64,6 +66,7 @@ d3.csv(
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
             .attr("dy", "0.71em")
+            .attr("dx", "-0.71em")
             .attr("text-anchor", "end")
             .text("Price ($)");
 
@@ -92,67 +95,75 @@ d3.csv(
                 .on("end", dragended)
         );
 
-    }
-);
+        function dragended() {
+            if (d3.event.x < width + margin.left - helperWidth || !svg.select(".user-trend").attr("d")) return;
+            d3.select(".real-trend-last").attr("display", null);
+            svg.attr("class", null);
+            d3.select('body').style("background-color", null);
+        }
+        
+        function dragstarted() {
+        
+            if (!realTrendRatio) {
+                if(d3.event.x < margin.left || d3.event.x > margin.left + helperWidth) return;
+            } else {
+                if (d3.event.x < x(data[Math.max(0,Math.floor(data.length*realTrendRatio)-10)].date) + margin.left || d3.event.x > width + margin.left - helperWidth) return;
+            }
+        
+            svg.select(".real-trend-last").attr("display", "none");
+            svg.select(".user-trend").attr("d", null)
+        
+            var d = d3.event.subject,
+                active = svg.select(".user-trend").datum(d),
+                x0 = d3.event.x,
+                y0 = d3.event.y;
+                //nearestPoint = data[Math.max(0,Math.floor(data.length*realTrendRatio)-1)];
+        
+            d3.event.on("drag", function () {
+        
+                if (d3.event.x > width + margin.left) return;
+                if (d3.event.y > height + margin.top) return;
+                if (d3.event.y < margin.top) return;
+        
+                var x1 = Math.floor(d3.event.x),
+                    y1 = Math.floor(d3.event.y),
+                    dx = x1 - x0,
+                    dy = y1 - y0;
+        
+                if (dx * dx + dy * dy > 100) {
+                    d.push([x0 = x1, y0 = y1]);
+                } else {
+                    d[d.length - 1] = [x1, y1];
+                }
 
-function dragended() {
-    if (d3.event.x < width + margin.left - helperWidth || !svg.select(".user-trend").attr("d")) return;
-    d3.select(".real-trend-last").attr("display", null);
-}
-
-function dragstarted() {
-
-    if (!realTrendRatio) {
-        if(d3.event.x < margin.left || d3.event.x > margin.left + helperWidth) return;
-    } else {
-        if(d3.event.x > width + margin.left - helperWidth) return;
-    }
-
-    svg.select(".real-trend-last").attr("display", "none");
-    svg.select(".user-trend").attr("d", null)
-
-    var d = d3.event.subject,
-        active = svg.select(".user-trend").datum(d),
-        x0 = d3.event.x,
-        y0 = d3.event.y;
-
-    d3.event.on("drag", function () {
-
-        if (d3.event.x > width + margin.left) return;
-        if (d3.event.y > height + margin.top) return;
-        if (d3.event.y < margin.top) return;
-
-        var x1 = d3.event.x,
-            y1 = d3.event.y,
-            dx = x1 - x0,
-            dy = y1 - y0;
-
-        if (dx * dx + dy * dy > 100) {
-            d.push([x0 = x1, y0 = y1]);
-        } else {
-            d[d.length - 1] = [x1, y1];
+                let nearestPoint = data[d3.bisector(p => p.date).right(data,x.invert(x1-margin.left))],
+                    currentDistance = y(nearestPoint.close) - y1 + margin.top;
+                svg.attr("class", currentDistance < 0 ? 'up' : 'down');
+                d3.select('body').style("background-color", c(Math.abs(currentDistance/height)));
+        
+                active
+                    .datum(d = d.filter(p => p[0] <= x1))
+                    .attr("d", spline);
+        
+            });
+        
+        }
+        
+        function drawRect(sel, msg) {
+        
+            sel.append("rect")
+                .attr("y", 0)
+                .attr("x", 0)
+                .attr("width", helperWidth)
+                .attr("height", height);
+        
+            sel.append("text")
+                .attr("transform", `rotate(-90)translate(${-height / 2},${helperWidth})`)
+                .attr("dy", "-0.71em")
+                .attr("text-anchor", "middle")
+                .text(msg||"");
+        
         }
 
-        active
-            .datum(d = d.filter(p => p[0] <= x1))
-            .attr("d", spline);
-
-    });
-
-}
-
-function drawRect(sel, msg) {
-
-    sel.append("rect")
-        .attr("y", 0)
-        .attr("x", 0)
-        .attr("width", helperWidth)
-        .attr("height", height);
-
-    sel.append("text")
-        .attr("transform", `rotate(-90)translate(${-height / 2},${helperWidth})`)
-        .attr("dy", "-0.71em")
-        .attr("text-anchor", "middle")
-        .text(msg||"");
-
-}
+    }
+);
