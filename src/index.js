@@ -11,7 +11,7 @@ let q = qs.parse(location.search),
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     helperWidth = width / 20,
-    realTrendRatio = q.r ? +q.r : 0,
+    realTrendRatio = +q.r > 0 ? Math.min(1,Math.abs(+q.r)) : 0,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 let parseTime = d3.timeParse("%d-%b-%y");
