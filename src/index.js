@@ -80,7 +80,7 @@ d3.csv(
             .datum(data.slice(Math.floor(data.length*realTrendRatio)))
             .attr("class", "real-trend real-trend-last")
             .attr("stroke", "steelblue")
-            .attr("display", "none")
+            .attr("opacity", 0)
             .attr("d", line);
 
         svg.append("path")
@@ -97,7 +97,7 @@ d3.csv(
 
         function dragended() {
             if (d3.event.x < width + margin.left - helperWidth || !svg.select(".user-trend").attr("d")) return;
-            d3.select(".real-trend-last").attr("display", null);
+            d3.select(".real-trend-last").attr("opacity", 1);
             svg.attr("class", null);
             d3.select('body').style("background-color", null);
         }
@@ -110,7 +110,7 @@ d3.csv(
                 if (d3.event.x < x(data[Math.max(0,Math.floor(data.length*realTrendRatio)-10)].date) + margin.left || d3.event.x > width + margin.left - helperWidth) return;
             }
         
-            svg.select(".real-trend-last").attr("display", "none");
+            svg.select(".real-trend-last").attr("opacity", 0);
             svg.select(".user-trend").attr("d", null)
         
             var d = d3.event.subject,
