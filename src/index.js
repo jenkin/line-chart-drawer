@@ -12,13 +12,15 @@ let q = qs.parse(location.search),
     height = +svg.attr("height") - margin.top - margin.bottom,
     helperWidth = width / 20,
     realTrendRatio = +q.r > 0 ? Math.min(1,Math.abs(+q.r)) : 0,
+    realTrendData = [], userTrendData = [],
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 let parseTime = d3.timeParse("%d-%b-%y");
 
 let x = d3.scaleTime().rangeRound([0, width]),
     y = d3.scaleLinear().rangeRound([height, 0]),
-    c = d3.scaleSequential(d3.interpolateRdYlGn).domain([1,0]);
+    c = d3.scaleSequential(d3.interpolateRdYlGn).domain([1,0]),
+    s = d3.scaleSqrt().domain([0,0.5]).rangeRound([100,0]).clamp(true);
 
 let line = d3.line()
     .x(function (d) { return x(d.date); })
@@ -38,6 +40,8 @@ d3.csv(
 
         x.domain(d3.extent(data, function (d) { return d.date; }));
         y.domain(d3.extent(data, function (d) { return d.close; }));
+
+        realTrendData = data.map(d => [ x(d.date)+margin.left, y(d.close)+margin.top ]);
 
         g.append("g")
             .attr("class", "drag-helper")
@@ -96,10 +100,18 @@ d3.csv(
         );
 
         function dragended() {
+
             if (d3.event.x < width + margin.left - helperWidth || !svg.select(".user-trend").attr("d")) return;
+
             d3.select(".real-trend-last").attr("opacity", 1);
             svg.attr("class", null);
             d3.select('body').style("background-color", null);
+
+            let sqm = Math.sqrt(userTrendData
+                .map(d => realTrendData[d3.bisector(d => d[0]).right(realTrendData,d[0])][1] - d[1])
+                .reduce((m,n) => m+n**2,0) / userTrendData.length) / height;
+            
+                d3.select("#score-container").text(`You earned ${Math.floor(s(sqm))} points!`);
         }
         
         function dragstarted() {
@@ -107,17 +119,18 @@ d3.csv(
             if (!realTrendRatio) {
                 if(d3.event.x < margin.left || d3.event.x > margin.left + helperWidth) return;
             } else {
-                if (d3.event.x < x(data[Math.max(0,Math.floor(data.length*realTrendRatio)-10)].date) + margin.left || d3.event.x > width + margin.left - helperWidth) return;
+                if (d3.event.x < realTrendData[Math.max(0,Math.floor(data.length*realTrendRatio)-10)][0] || d3.event.x > width + margin.left - helperWidth) return;
             }
         
             svg.select(".real-trend-last").attr("opacity", 0);
             svg.select(".user-trend").attr("d", null)
+            d3.select("#score-container").text("...");
         
-            var d = d3.event.subject,
-                active = svg.select(".user-trend").datum(d),
+            userTrendData = d3.event.subject;
+
+            let active = svg.select(".user-trend").datum(userTrendData),
                 x0 = d3.event.x,
                 y0 = d3.event.y;
-                //nearestPoint = data[Math.max(0,Math.floor(data.length*realTrendRatio)-1)];
         
             d3.event.on("drag", function () {
         
@@ -131,18 +144,18 @@ d3.csv(
                     dy = y1 - y0;
         
                 if (dx * dx + dy * dy > 100) {
-                    d.push([x0 = x1, y0 = y1]);
+                    userTrendData.push([x0 = x1, y0 = y1]);
                 } else {
-                    d[d.length - 1] = [x1, y1];
+                    userTrendData[userTrendData.length - 1] = [x1, y1];
                 }
 
-                let nearestPoint = data[d3.bisector(p => p.date).right(data,x.invert(x1-margin.left))],
-                    currentDistance = y(nearestPoint.close) - y1 + margin.top;
-                svg.attr("class", currentDistance < 0 ? 'up' : 'down');
-                d3.select('body').style("background-color", c(Math.abs(currentDistance/height)));
+                let nearestPointX = realTrendData[d3.bisector(d => d[0]).right(realTrendData,x1)],
+                    currentDistanceY = nearestPointX[1] - y1;
+                svg.attr("class", currentDistanceY < 0 ? 'up' : 'down');
+                d3.select('body').style("background-color", c(Math.abs(currentDistanceY/height)));
         
                 active
-                    .datum(d = d.filter(p => p[0] <= x1))
+                    .datum(userTrendData = userTrendData.filter(d => d[0] <= x1))
                     .attr("d", spline);
         
             });
