@@ -37,12 +37,12 @@ d3.csv(
 
         g.append("g")
             .attr("class", "drag-helper")
-            .call(drawRect)
+            .call(sel => { drawRect(sel, "Begin to draw your trend from here...") });
 
         g.append("g")
             .attr("class", "drag-helper")
             .attr("transform", `translate(${width - helperWidth},0)`)
-            .call(drawRect)
+            .call(sel => { drawRect(sel, "... end to draw your trend here.") });
 
         g.append("g")
             .attr("transform", "translate(0," + height + ")")
@@ -128,7 +128,7 @@ function dragstarted() {
 
 }
 
-function drawRect(sel) {
+function drawRect(sel, msg) {
 
     sel.append("rect")
         .attr("y", 0)
@@ -140,6 +140,6 @@ function drawRect(sel) {
         .attr("transform", `rotate(-90)translate(${-height / 2},${helperWidth})`)
         .attr("dy", "-0.71em")
         .attr("text-anchor", "middle")
-        .text("Begin to draw your trend from here...");
+        .text(msg||"");
 
 }
