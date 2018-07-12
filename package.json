@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "d3": "^5.5.0",
+    "query-string": "^6.1.0",
     "timeseries-analysis": "^1.0.12"
   }
 }

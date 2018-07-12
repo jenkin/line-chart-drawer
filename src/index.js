@@ -1,7 +1,9 @@
 import './index.scss'
 import * as d3 from 'd3'
+import * as qs from 'query-string'
 
-let containerId = 'chart-container',
+let q = qs.parse(location.search),
+    containerId = 'chart-container',
     containerWidth = document.getElementById(containerId).offsetWidth,
     containerHeight = document.getElementById(containerId).offsetHeight,
     svg = d3.select(`#${containerId}`).append("svg").attr("width", containerWidth).attr("height", containerHeight),
@@ -9,6 +11,7 @@ let containerId = 'chart-container',
     width = +svg.attr("width") - margin.left - margin.right,
     height = +svg.attr("height") - margin.top - margin.bottom,
     helperWidth = width / 20,
+    realTrendRatio = q.r ? +q.r : 0,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 let parseTime = d3.timeParse("%d-%b-%y");
@@ -65,8 +68,14 @@ d3.csv(
             .text("Price ($)");
 
         g.append("path")
-            .datum(data)
-            .attr("class", "real-trend")
+            .datum(data.slice(0,Math.floor(data.length*realTrendRatio)+1))
+            .attr("class", "real-trend real-trend-first")
+            .attr("stroke", "steelblue")
+            .attr("d", line);
+
+        g.append("path")
+            .datum(data.slice(Math.floor(data.length*realTrendRatio)))
+            .attr("class", "real-trend real-trend-last")
             .attr("stroke", "steelblue")
             .attr("display", "none")
             .attr("d", line);
@@ -88,14 +97,18 @@ d3.csv(
 
 function dragended() {
     if (d3.event.x < width + margin.left - helperWidth || !svg.select(".user-trend").attr("d")) return;
-    d3.select(".real-trend").attr("display", null);
+    d3.select(".real-trend-last").attr("display", null);
 }
 
 function dragstarted() {
 
-    if (d3.event.x < margin.left || d3.event.x > margin.left + helperWidth) return;
+    if (!realTrendRatio) {
+        if(d3.event.x < margin.left || d3.event.x > margin.left + helperWidth) return;
+    } else {
+        if(d3.event.x > width + margin.left - helperWidth) return;
+    }
 
-    svg.select(".real-trend").attr("display", "none");
+    svg.select(".real-trend-last").attr("display", "none");
     svg.select(".user-trend").attr("d", null)
 
     var d = d3.event.subject,
