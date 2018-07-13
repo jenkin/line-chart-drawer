@@ -115,7 +115,7 @@ d3
                         .map(d => realTrendData[d3.bisector(d => d[0]).right(realTrendData, d[0])][1] - d[1])
                         .reduce((m, n) => m + n ** 2, 0) / userTrendData.length) / height;
 
-                    d3.select("#score-container").text(`You earned ${Math.floor(s(sqm))} dollars from ${symbol.name}!`);
+                    d3.select("#score-container").text(`You earned $${Math.floor(s(sqm))} from ${symbol.name}!`);
                 }
 
                 function dragstarted() {
