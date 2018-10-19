@@ -1,12 +1,11 @@
 const path = require('path')
-const webpack = require("webpack")
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const HtmlWebPackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = {
     entry: {
-        'index': './src/index.js',
+        index: './src/index.js',
     },
     target: 'web',
     output: {
@@ -15,7 +14,6 @@ module.exports = {
     },
     module: {
         rules: [
-            { test: /\.html$/, loader: 'html-loader' },
             { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/ },
             {
                 test: /\.s?css$/,
