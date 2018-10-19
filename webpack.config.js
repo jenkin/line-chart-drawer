@@ -2,6 +2,7 @@ const path = require('path')
 const webpack = require("webpack")
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const HtmlWebPackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = {
     entry: {
@@ -16,8 +17,14 @@ module.exports = {
         rules: [
             { test: /\.html$/, loader: 'html-loader' },
             { test: /\.js$/, loader: 'babel-loader', exclude: /node_modules/ },
-            { test: /\.css$/, loader: "style-loader!css-loader" },
-            { test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
+            {
+                test: /\.s?css$/,
+                use: [
+                    { loader: MiniCssExtractPlugin.loader },
+                    "css-loader",
+                    "sass-loader"
+                ],
+            },
             { test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff&name=./dist/fonts/[name]/[hash].[ext]' },
             { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/octet-stream&name=./dist/fonts/[name]/[hash].[ext]' },
             { test: /\.eot(\?v=\d+\.\d+\.\d+)?$/, loader: 'file-loader?name=./dist/fonts/[name]/[hash].[ext]' },
@@ -30,6 +37,10 @@ module.exports = {
         new HtmlWebPackPlugin({
             template: './src/index.html',
             filename: 'index.html',
+        }),
+        new MiniCssExtractPlugin({
+            filename: "[name].bundle.css",
+            chunkFilename: "[id].css"
         }),
     ],
     optimization: {
